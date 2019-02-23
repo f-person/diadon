@@ -39,6 +39,8 @@ for argnum, arg in enumerate(given_args):
             with open("keys.json", "r+") as jsonFile:
                 data = json.load(jsonFile)
                 try:
+                    if ('թութ․հայ') in given_args[argnum+2]:
+                        given_args[argnum+2] = 'https://xn--69aa8bzb.xn--y9a3aq'
                     data["m_keys"]["pod"] = given_args[argnum+2]
                     data["m_keys"]["client_secret"] = given_args[argnum+3]
                     data["m_keys"]["access_token"] = given_args[argnum+4]

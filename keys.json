@@ -1,0 +1,12 @@
+{
+  "m_keys": {"pod": "", 
+    "client_secret": "", 
+    "access_token": "", 
+    "client_key": ""
+    },
+  "d_keys": {"pod": "",
+    "username": "",
+    "password": ""
+    },
+    "mastodonMax": 140
+}
