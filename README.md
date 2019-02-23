@@ -1,2 +1,2 @@
 # diadon
-tool which chooses where to share: in mastodon or in diaspora
+tool which chooses between tooting on mastodon and sharing on diaspora
