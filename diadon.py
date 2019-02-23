@@ -3,15 +3,16 @@ import sys, os
 import diaspy, json
 
 given_args = sys.argv[1:]
+
 args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config', '-dm']
 post = ''
 
 help_message = """USAGE: 
-    just type diadon <your text here> to share it on diaspora if the length of the text is more than length for tooting on mastodon. by default it's set to 140.
+    just type diadon '<your text here>' to share it on diaspora if the length of the text is more than length for tooting on mastodon. by default it's set to 140.
 
-    to ignore max length and share on diaspora add -d or --diaspora argument (diadon -d <your text here>)
-    to ignore max lentgh and toot on mastodon add -m or --mastodon argument (diadon -m <your text here>)
-    to share on diaspora and toot on mastodon add -dm argument (diadon -dm <your text here>)
+    to ignore max length and share on diaspora add -d or --diaspora argument (diadon -d '<your text here>')
+    to ignore max lentgh and toot on mastodon add -m or --mastodon argument (diadon -m '<your text here>')
+    to share on diaspora and toot on mastodon add -dm argument (diadon -dm '<your text here>')
 
 FIRST TIME USE:
     first of all you need to create a new mastodon application in <your pod address>/settings/applications/new 
@@ -85,9 +86,12 @@ for argnum, arg in enumerate(given_args):
 
     if arg not in args or arg =='-d' or arg == '--diaspora' or arg =='-m' or arg == '--mastodon':
         if arg not in args:
-            post = ' '.join(given_args[argnum:])
-        else:
-            post = ' '.join(given_args[argnum+1:])
+            post = arg
+        # if arg not in args:
+        #     post = ' '.join(given_args[argnum:])
+        # else:
+        #     post = ' '.join(given_args[argnum+1:])
+
         if len(post)==0:
             print("the post is empty")
         elif (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm':
