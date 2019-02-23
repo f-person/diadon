@@ -4,7 +4,7 @@ import diaspy, json
 
 given_args = sys.argv[1:]
 
-args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config', '-dm']
+args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config']
 post = ''
 
 help_message = """USAGE: 
@@ -91,7 +91,8 @@ for argnum, arg in enumerate(given_args):
         #     post = ' '.join(given_args[argnum:])
         # else:
         #     post = ' '.join(given_args[argnum+1:])
-
+        if arg == '-dm':
+            post = given_args[argnum+1]
         if len(post)==0:
             print("the post is empty")
         elif (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm':
