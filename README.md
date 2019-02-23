@@ -5,8 +5,9 @@ USAGE:
     
     just type diadon <your text here> to share it on diaspora if the length of the text is more than length for tooting on mastodon. by default it's set to 140.
 
-    to override max length and share on diaspora add -d or --diaspora argument (diadon -d <your text here>)
-    to override max lentgh and toot on mastodon add -m or --mastodon argument (diadon -m <your text here>)
+    to ignore max length and share on diaspora add -d or --diaspora argument (diadon -d <your text here>)
+    to ignore max lentgh and toot on mastodon add -m or --mastodon argument (diadon -m <your text here>)
+    to share on diaspora and toot on mastodon add -dm argument (diadon -dm <your text here>)
 
 FIRST TIME USE:
     
