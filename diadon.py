@@ -1,14 +1,10 @@
 from mastodon import Mastodon
-# from keys import *
 import sys, os
 import diaspy, json
 
 given_args = sys.argv[1:]
 args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config', 'mastodon']
 post = ''
-
-keys = json.load(open("keys.json", "r"))
-mastodonMax = keys["mastodonMax"]
 
 help_message = """USAGE: 
     just type diadon <your text here> to share it on diaspora if the length of the text is more than length for tooting on mastodon. by default it's set to 140.
@@ -24,6 +20,12 @@ CONFIGURATIN:
     to change diaspora account settings type: diadon config <pod address> <username> <password>
     to change mastodon account settings type: diadon config <pod address> <client_secret> <access_token> <client_key> (if you dont have them get them by following 'FIRST TIME USE')
         """
+
+if len(given_args)==0:
+    sys.exit(help_message)
+
+keys = json.load(open("keys.json", "r"))
+mastodonMax = int(keys["mastodonMax"])
 
 for argnum, arg in enumerate(given_args):
     if arg == '-h' or arg == '--help':
@@ -70,13 +72,26 @@ for argnum, arg in enumerate(given_args):
             post = ' '.join(given_args[argnum+1:])
         if len(post)==0:
             print("the post is empty")
-        elif len(post)<mastodonMax and arg != '-d' and arg != '--diaspora':
+        elif (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon'):
+
+            if (len(post)>500):
+                shareOnDiasp = ''
+                while (shareOnDiasp) != 'y' or shareOnDiasp!= 'yes' or shareOnDiasp != 'n' or shareOnDiasp!='no':    
+                    shareOnDiasp = input("the length of a toot can't be more than 500 symbols. share the post on diaspora? [y,n]")
+                if (shareOnDiasp[0] == 'n'):
+                    break
+                else:
+                    api = diaspy.connection.Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
+                    api.login()
+                    diaspy.streams.Stream(api).post(post)
+                    print('successfully shared on diaspora')
+
             api = Mastodon(keys["m_keys"]["client_key"], keys["m_keys"]["client_secret"], keys["m_keys"]["access_token"], keys["m_keys"]["pod"])
-            # api.toot(post)
+            api.toot(post)
             print('successfully tooted on mastodon')
         else:
             api = diaspy.connection.Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
             api.login()
-            # diaspy.streams.Stream(api).post(post)
+            diaspy.streams.Stream(api).post(post)
             print('successfully shared on diaspora')
         break
