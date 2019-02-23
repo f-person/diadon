@@ -27,7 +27,7 @@ CONFIGURATIN:
 if len(given_args)==0:
     sys.exit(help_message)
 
-keys = json.load(open("keys.json", "r"))
+keys = json.load(open(os.path.expanduser("~") + "/keys.json", "r"))
 mastodonMax = int(keys["mastodonMax"])
 
 for argnum, arg in enumerate(given_args):
@@ -37,7 +37,7 @@ for argnum, arg in enumerate(given_args):
 
     if arg == 'config':
         if given_args[argnum+1] == '-m' or given_args[argnum+1]=='--mastodon':
-            with open("keys.json", "r+") as jsonFile:
+            with open(os.path.expanduser("~") + "/keys.json", "r+") as jsonFile:
                 data = json.load(jsonFile)
                 try:
                     if ('թութ․հայ') in given_args[argnum+2]:
@@ -54,7 +54,7 @@ for argnum, arg in enumerate(given_args):
                 jsonFile.truncate()
             break
         elif given_args[argnum+1] == '-d' or given_args[argnum+1]=='--diaspora':
-            with open("keys.json", "r+") as jsonFile:
+            with open(os.path.expanduser("~") + "/keys.json", "r+") as jsonFile:
                 data = json.load(jsonFile)
                 try:
                     data["d_keys"]["pod"] = given_args[argnum+2]
@@ -68,7 +68,7 @@ for argnum, arg in enumerate(given_args):
                 jsonFile.truncate()
             break
         elif given_args[argnum+1] == '-max':
-             with open("keys.json", "r+") as jsonFile:
+             with open(os.path.expanduser("~") + "/keys.json", "r+") as jsonFile:
                 data = json.load(jsonFile)
                 try:
                     if len(given_args[argnum+2])>500:
