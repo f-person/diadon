@@ -1,2 +1,2 @@
 # diadon
-cli tool which helps you to post in mastodon, if the post is short and in disapora, if it's long.
+tool which chooses where to share: in mastodon or in diaspora
