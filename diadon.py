@@ -2,9 +2,7 @@ from mastodon import Mastodon
 import sys, os
 import diaspy, json
 
-given_args = sys.argv#[1:]
-
-print(given_args)
+given_args = sys.argv[1:]
 
 args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config', '-dm']
 
@@ -31,7 +29,19 @@ if len(given_args)==0:
 keys = json.load(open(os.path.expanduser("~") + "/.diadon/keys.json", "r"))
 mastodonMax = int(keys["mastodonMax"])
 
-for argnum, arg in enumerate(given_args[1:]):
+def shareOnDiaspora():
+    api = diaspy.connection.Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
+    api.login()
+    diaspy.streams.Stream(api).post(post)
+    print('successfully shared on diaspora')
+
+def tootOnMastodon():
+    api = Mastodon(keys["m_keys"]["client_key"], keys["m_keys"]["client_secret"], keys["m_keys"]["access_token"], keys["m_keys"]["pod"])
+    api.toot(post)
+    print('successfully tooted on mastodon')
+
+
+for argnum, arg in enumerate(given_args):
     if arg == '-h' or arg == '--help':
         print(help_message)
         break
@@ -86,7 +96,6 @@ for argnum, arg in enumerate(given_args[1:]):
             break
 
     if arg not in args or arg =='-d' or arg == '--diaspora' or arg =='-m' or arg == '--mastodon' or arg == '-dm':
-        print("{} in args = {}".format(arg, arg in args))
         if arg not in args:
             post = arg
         
@@ -104,26 +113,13 @@ for argnum, arg in enumerate(given_args[1:]):
                 if (shareOnDiasp[0] == 'n'):
                     break
                 else:
-                    api = diaspy.connection.Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
-                    api.login()
-                    diaspy.streams.Stream(api).post(post)
-                    print('successfully shared on diaspora')
-
-            api = Mastodon(keys["m_keys"]["client_key"], keys["m_keys"]["client_secret"], keys["m_keys"]["access_token"], keys["m_keys"]["pod"])
-            api.toot(post)
-            print('successfully tooted on mastodon')
-            print(arg)
-
+                    shareOnDiaspora()
+                    break
+            tootOnMastodon()
             if arg=='-dm':
-                api = diaspy.connection.Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
-                api.login()
-                diaspy.streams.Stream(api).post(post)
-                print('successfully shared on diaspora')
+                shareOnDiaspora()
                 break
             break
         else:
-            api = diaspy.connection.Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
-            api.login()
-            diaspy.streams.Stream(api).post(post)
-            print('successfully shared on diaspora')
+            shareOnDiaspora()
             break
