@@ -2,10 +2,11 @@ from mastodon import Mastodon
 import sys, os
 import diaspy, json
 
-given_args = sys.argv[1:]
+given_args = sys.argv#[1:]
 
-args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config']
-post = ''
+print(given_args)
+
+args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config', '-dm']
 
 help_message = """USAGE: 
     just type diadon '<your text here>' to share it on diaspora if the length of the text is more than length for tooting on mastodon. by default it's set to 140.
@@ -30,7 +31,7 @@ if len(given_args)==0:
 keys = json.load(open(os.path.expanduser("~") + "/.diadon/keys.json", "r"))
 mastodonMax = int(keys["mastodonMax"])
 
-for argnum, arg in enumerate(given_args):
+for argnum, arg in enumerate(given_args[1:]):
     if arg == '-h' or arg == '--help':
         print(help_message)
         break
@@ -81,20 +82,19 @@ for argnum, arg in enumerate(given_args):
                 except:
                     print("please input the max number")
         else:
-            prin(help_message)
+            print(help_message)
             break
 
-    if arg not in args or arg =='-d' or arg == '--diaspora' or arg =='-m' or arg == '--mastodon':
+    if arg not in args or arg =='-d' or arg == '--diaspora' or arg =='-m' or arg == '--mastodon' or arg == '-dm':
+        print("{} in args = {}".format(arg, arg in args))
         if arg not in args:
             post = arg
-        # if arg not in args:
-        #     post = ' '.join(given_args[argnum:])
-        # else:
-        #     post = ' '.join(given_args[argnum+1:])
-        if arg == '-dm':
+        
+        elif arg == '-dm' or arg == '-d' or arg=='--diaspora' or arg == '-m' or arg == '--mastodon':
             post = given_args[argnum+1]
         if len(post)==0:
             print("the post is empty")
+            break
         elif (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm':
 
             if (len(post)>500):
@@ -112,16 +112,18 @@ for argnum, arg in enumerate(given_args):
             api = Mastodon(keys["m_keys"]["client_key"], keys["m_keys"]["client_secret"], keys["m_keys"]["access_token"], keys["m_keys"]["pod"])
             api.toot(post)
             print('successfully tooted on mastodon')
+            print(arg)
 
             if arg=='-dm':
                 api = diaspy.connection.Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
                 api.login()
                 diaspy.streams.Stream(api).post(post)
                 print('successfully shared on diaspora')
-
+                break
+            break
         else:
             api = diaspy.connection.Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
             api.login()
             diaspy.streams.Stream(api).post(post)
             print('successfully shared on diaspora')
-        break
+            break
