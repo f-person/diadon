@@ -4,24 +4,30 @@ import diaspy, json
 
 given_args = sys.argv[1:]
 
-args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config', '-dm']
+args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config', '-dm', '--diadon']
 
-help_message = """USAGE: 
+help_message = """     _   _               _                 
+  __| | (_)   __ _    __| |   ___    _ __  
+ / _` | | |  / _` |  / _` |  / _ \  | '_ \ 
+| (_| | | | | (_| | | (_| | | (_) | | | | |
+ \__,_| |_|  \__,_|  \__,_|  \___/  |_| |_|
+
+USAGE:
     just type diadon '<your text here>' to share it on diaspora if the length of the text is more than length for tooting on mastodon. by default it's set to 140.
 
-    to ignore max length and share on diaspora add -d or --diaspora argument (diadon -d '<your text here>')
-    to ignore max lentgh and toot on mastodon add -m or --mastodon argument (diadon -m '<your text here>')
-    to share on diaspora and toot on mastodon add -dm argument (diadon -dm '<your text here>')
+    to ignore max lentgh and toot on mastodon , use -m  or --mastodon argument (diadon -m  'your text here')
+    to ignore max length and share on diaspora, use -d  or --diaspora argument (diadon -d  'your text here')
+    to share on diaspora and toot on mastodon , use -dm or --diadon   argument (diadon -dm 'your text here')
 
 FIRST TIME USE:
-    first of all you need to create a new mastodon application in <your pod address>/settings/applications/new 
-    then you have to configure mastodon and diaspora accounts
+    create a new mastodon application in <your pod address>/settings/applications/new
+    then configure mastodon and diaspora accounts
 
 CONFIGURATIN:
-    to change diaspora account settings type: diadon config -d <pod address> <username> <password>
-    to change mastodon account settings type: diadon config -m <pod address> <client_secret> <access_token> <client_key> (if you dont have them get them by following 'FIRST TIME USE')
-    to change max length for sharing on diaspora type: diadon config -max <max num> (can't be more than 500)
-        """
+    change max length               : '$ diadon config -max <max num> (can't be more than 500)'
+    change diaspora account settings: '$ diadon config -d <pod address> <username> <password>'
+    change mastodon account settings: '$ diadon config -m <pod address> <client_secret> <access_token> <client_key>'
+        (if you dont have them, get as described in "FIRST TIME USE")"""
 
 if len(given_args)==0:
     sys.exit(help_message)
@@ -95,20 +101,20 @@ for argnum, arg in enumerate(given_args):
             print(help_message)
             break
 
-    if arg not in args or arg =='-d' or arg == '--diaspora' or arg =='-m' or arg == '--mastodon' or arg == '-dm':
+    if arg not in args or arg =='-d' or arg == '--diaspora' or arg =='-m' or arg == '--mastodon' or arg == '-dm' or arg =='--diadon':
         if arg not in args:
             post = arg
-        
-        elif arg == '-dm' or arg == '-d' or arg=='--diaspora' or arg == '-m' or arg == '--mastodon':
+
+        elif arg == '-dm' or arg=='--diadon' or arg == '-d' or arg=='--diaspora' or arg == '-m' or arg == '--mastodon':
             post = given_args[argnum+1]
         if len(post)==0:
             print("the post is empty")
             break
-        elif (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm':
+        elif (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm' or arg=='--diadon':
 
             if (len(post)>500):
                 shareOnDiasp = ''
-                while (shareOnDiasp) != 'y' or shareOnDiasp!= 'yes' or shareOnDiasp != 'n' or shareOnDiasp!='no':    
+                while (shareOnDiasp) != 'y' or shareOnDiasp!= 'yes' or shareOnDiasp != 'n' or shareOnDiasp!='no':
                     shareOnDiasp = input("the length of a toot can't be more than 500 symbols. share the post on diaspora? [y,n]")
                 if (shareOnDiasp[0] == 'n'):
                     break
@@ -116,7 +122,7 @@ for argnum, arg in enumerate(given_args):
                     shareOnDiaspora()
                     break
             tootOnMastodon()
-            if arg=='-dm':
+            if arg=='-dm' or arg=='--diadon':
                 shareOnDiaspora()
                 break
             break
