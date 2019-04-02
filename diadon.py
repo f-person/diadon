@@ -49,8 +49,7 @@ def tootOnMastodon():
 
 for argnum, arg in enumerate(given_args):
     if arg == '-h' or arg == '--help':
-        print(help_message)
-        break
+        sys.exit(help_message)
 
     if arg == 'config':
         if given_args[argnum+1] == '-m' or given_args[argnum+1]=='--mastodon':
@@ -64,68 +63,69 @@ for argnum, arg in enumerate(given_args):
                     data["m_keys"]["access_token"] = given_args[argnum+4]
                     data["m_keys"]["client_key"] = given_args[argnum+5]
                 except:
-                    print("please enter all keys")
-                    break
+                    sys.exit('please enter all keys')
                 jsonFile.seek(0)
                 json.dump(data, jsonFile)
                 jsonFile.truncate()
-            break
+            sys.exit()
         elif given_args[argnum+1] == '-d' or given_args[argnum+1]=='--diaspora':
             with open(os.path.expanduser("~") + "/.diadon/keys.json", "r+") as jsonFile:
                 data = json.load(jsonFile)
                 try:
+                    if "http://" not in given_args[argnum+2] or "https://" not in given_args[argnum+2]:
+                        given_args[argnum+2] = "https://" + given_args[argnum+2]
                     data["d_keys"]["pod"] = given_args[argnum+2]
                     data["d_keys"]["username"] = given_args[argnum+3]
                     data["d_keys"]["password"] = given_args[argnum+4]
                 except:
-                    print("please enter all keys")
-                    break
+                    sys.exit('please enter all keys')
                 jsonFile.seek(0)
                 json.dump(data, jsonFile)
                 jsonFile.truncate()
-            break
+            sys.exit()
         elif given_args[argnum+1] == '-max':
-             with open(os.path.expanduser("~") + "/.diadon/keys.json", "r+") as jsonFile:
+            with open(os.path.expanduser("~") + "/.diadon/keys.json", "r+") as jsonFile:
                 data = json.load(jsonFile)
+                if int(given_args[argnum+2])>500:
+                    sys.exit("max length can't be more than 500")
+                if not given_args[argnum+2]:
+                    sys.exit("please enter the max number")
                 try:
-                    if len(given_args[argnum+2])>500:
-                        print("max length can't be more than 500")
-                        break
-                    if type(given_args[argnum+2])!=int:
-                        print("please input an integer")
-                        break
-                    data["mastodonMax"] = given_args[argnum+2]
+                    data["mastodonMax"] = int(given_args[argnum+2])
                 except:
-                    print("please input the max number")
+                    sys.exit("please enter an integer")
+                jsonFile.seek(0)
+                json.dump(data, jsonFile)
+                jsonFile.truncate()
+                sys.exit()   
         else:
-            print(help_message)
-            break
+            sys.exit(help_message)
 
     if arg not in args or arg =='-d' or arg == '--diaspora' or arg =='-m' or arg == '--mastodon' or arg == '-dm' or arg =='--diadon':
         if arg not in args:
             post = arg
 
-        elif arg == '-dm' or arg=='--diadon' or arg == '-d' or arg=='--diaspora' or arg == '-m' or arg == '--mastodon':
-            post = given_args[argnum+1]
-        if len(post)==0:
-            print("the post is empty")
-            break
-        elif (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm' or arg=='--diadon':
+        if arg == '-dm' or arg=='--diadon' or arg == '-d' or arg=='--diaspora' or arg == '-m' or arg == '--mastodon':
+            try:
+                post = given_args[argnum+1]
+            except:
+                sys.exit('the post is empty')
+        if (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm' or arg=='--diadon':
 
             if (len(post)>500):
                 shareOnDiasp = ''
                 while (shareOnDiasp) != 'y' or shareOnDiasp!= 'yes' or shareOnDiasp != 'n' or shareOnDiasp!='no':
                     shareOnDiasp = input("the length of a toot can't be more than 500 symbols. share the post on diaspora? [y,n]")
                 if (shareOnDiasp[0] == 'n'):
-                    break
+                    sys.exit()
                 else:
                     shareOnDiaspora()
-                    break
+                    sys.exit()
             tootOnMastodon()
             if arg=='-dm' or arg=='--diadon':
                 shareOnDiaspora()
-                break
-            break
+                sys.exit()
+            sys.exit()
         else:
             shareOnDiaspora()
-            break
+            sys.exit()
