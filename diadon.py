@@ -35,17 +35,33 @@ if len(given_args)==0:
 keys = json.load(open(os.path.expanduser("~") + "/.diadon/keys.json", "r"))
 mastodonMax = int(keys["mastodonMax"])
 
+imgFileNames = []
+
 def shareOnDiaspora():
     api = diaspy.connection.Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
     api.login()
-    diaspy.streams.Stream(api).post(post)
+    stream = diaspy.streams.Stream(api)
+    diasporaMedia = []
+    for filename in imgFileNames:
+        try:
+            diasporaMedia.append(stream._photoupload(filename=filename))
+        except:
+            print("got unexpected error")
+    stream.post(text=post, media=diasporaMedias)
     print('successfully shared on diaspora')
 
 def tootOnMastodon():
     api = Mastodon(keys["m_keys"]["client_key"], keys["m_keys"]["client_secret"], keys["m_keys"]["access_token"], keys["m_keys"]["pod"])
-    api.toot(post)
-    print('successfully tooted on mastodon')
+    mastodonMedia = []
+    for filename in imgFileNames:
+        try:
+            with open("media.jpeg", "rb") as f:
+                mastodonMedia.append(api.media_post(f.read(), "image/png"))
+            except:
+                print("got unexpected error")
 
+    api.status_post(post, media_ids = imgFileNames)
+    print('successfully tooted on mastodon')
 
 for argnum, arg in enumerate(given_args):
     if arg == '-h' or arg == '--help':
@@ -104,10 +120,20 @@ for argnum, arg in enumerate(given_args):
     if arg not in args or arg =='-d' or arg == '--diaspora' or arg =='-m' or arg == '--mastodon' or arg == '-dm' or arg =='--diadon':
         if arg not in args:
             post = arg
+            for mediaArg in given_args[argnum+1:-1]:
+                try:
+                    imgFileNames.append(mediaArg)
+                except:
+                    print("no imgFileNames")
 
         if arg == '-dm' or arg=='--diadon' or arg == '-d' or arg=='--diaspora' or arg == '-m' or arg == '--mastodon':
             try:
                 post = given_args[argnum+1]
+                for mediaArg in given_args[argnum+2:-1]:
+                    try:
+                        imgFileNames.append(mediaArg)
+                    except:
+                        print("no media")
             except:
                 sys.exit('the post is empty')
         if (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm' or arg=='--diadon':
