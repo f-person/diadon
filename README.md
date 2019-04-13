@@ -1,5 +1,5 @@
 # diadon
-tool which chooses between tooting on mastodon and sharing on diaspora
+diadon is a tool for posting on diaspora/mastodon.
 
 INSTALLATION:
 
