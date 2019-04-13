@@ -1,12 +1,17 @@
 import os
 
 print("installing dependecies...\n\n")
-os.system("pip3 install Mastodon.py diaspy-api")
+os.system("pip3 install Mastodon.py")
+
+os.system("git clone https://github.com/marekjm/diaspy && cd diaspy")
+os.system("sudo python3 setup.py install && cd ..")
+
 print("\n\nall dependecies satisfied")
 
 os.system("mkdir ~/.diadon")
 os.system("cp diadon.py ~/.diadon")
 os.system("cp keys.json ~/.diadon")
+os.system("cp .get ~/.diadon")
 
 bashrc_path = os.path.expanduser("~") + "/.bashrc"
 
