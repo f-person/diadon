@@ -13,9 +13,11 @@ USAGE:
         if the length of the text is more than length for tooting on mastodon.
         by default it's set to 140.
 
-    to ignore max lentgh and toot on mastodon , use -m  or --mastodon argument (diadon -m  'your text here')
-    to ignore max length and share on diaspora, use -d  or --diaspora argument (diadon -d  'your text here')
-    to share on diaspora and toot on mastodon , use -dm or --diadon   argument (diadon -dm 'your text here')
+    to ignore max lentgh and toot on mastodon ,  use -m  or --mastodon argument (diadon -m  'your text here')
+    to ignore max length and share on diaspora,  use -d  or --diaspora argument (diadon -d  'your text here')
+    to share on diaspora and toot on mastodon ,  use -dm or --diadon   argument (diadon -dm 'your text here')
+    to post images use this pattern: '$ diadon [arg] 'post text' /full/path/to/image1 [/full/path/to/image2]'
+        [] - optional
 
 FIRST TIME USE:
 
