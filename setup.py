@@ -11,7 +11,7 @@ print("\n\nall dependecies satisfied")
 os.system("mkdir ~/.diadon")
 os.system("cp diadon.py ~/.diadon")
 os.system("cp keys.json ~/.diadon")
-os.system("cp .get ~/.diadon")
+os.system("cp .git ~/.diadon")
 
 bashrc_path = os.path.expanduser("~") + "/.bashrc"
 
