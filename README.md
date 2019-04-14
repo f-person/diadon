@@ -1,6 +1,16 @@
 # diadon
 diadon is a tool for posting on diaspora/mastodon.
 
+REQUIREMENTS:
+    
+    diaspy:
+        $ git clone https://github.com/marekjm/diaspy.git
+        $ cd diaspy
+        $ sudo python3 setup.py install
+
+    Mastodon.py:
+        $ pip3 install Mastodon.py
+
 INSTALLATION:
 
     $ git clone https://github.com/f-person/diadon.git
