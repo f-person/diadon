@@ -1,7 +1,7 @@
 # diadon
 diadon is a tool for posting on diaspora/mastodon.
 
-REQUIREMENTS:
+DEPENDENCIES:
     
     diaspy:
         $ git clone https://github.com/marekjm/diaspy.git
