@@ -109,38 +109,37 @@ for argnum, arg in enumerate(given_args):
                 sys.exit()   
         else:
             sys.exit(help_message)
-
-    if arg not in args or arg =='-d' or arg == '--diaspora' or arg =='-m' or arg == '--mastodon' or arg == '-dm' or arg =='--diadon':
-        if arg not in args:
-            post = arg
-            for mediaArg in given_args[argnum+1:-1]:
-                imgFileNames.append(mediaArg)
-        if arg == '-dm' or arg=='--diadon' or arg == '-d' or arg=='--diaspora' or arg == '-m' or arg == '--mastodon':
+    
+    if arg not in args:
+        post = arg
+        for mediaArg in given_args[argnum+1:]:
+            imgFileNames.append(mediaArg)
+    if arg == '-dm' or arg=='--diadon' or arg == '-d' or arg=='--diaspora' or arg == '-m' or arg == '--mastodon':
+        try:
+            post = given_args[argnum+1]   
+        except:
+            sys.exit('the post is empty')
+        for mediaArg in given_args[argnum+2:]:
             try:
-                post = given_args[argnum+1]   
+                imgFileNames.append(mediaArg)
             except:
-                sys.exit('the post is empty')
-            for mediaArg in given_args[argnum+2:]:
-                try:
-                    imgFileNames.append(mediaArg)
-                except:
-                    print("no media")
-        if (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm' or arg=='--diadon':
+                print("no media")
+    if (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm' or arg=='--diadon':
 
-            if (len(post)>500):
-                shareOnDiasp = ''
-                while (shareOnDiasp) != 'y' or shareOnDiasp!= 'yes' or shareOnDiasp != 'n' or shareOnDiasp!='no':
-                    shareOnDiasp = input("the length of a toot can't be more than 500 symbols. share the post on diaspora? [y,n]")
-                if (shareOnDiasp[0] == 'n'):
-                    sys.exit()
-                else:
-                    shareOnDiaspora()
-                    sys.exit()
-            tootOnMastodon()
-            if arg=='-dm' or arg=='--diadon':
+        if (len(post)>500):
+            shareOnDiasp = ''
+            while (shareOnDiasp) != 'y' or shareOnDiasp!= 'yes' or shareOnDiasp != 'n' or shareOnDiasp!='no':
+                shareOnDiasp = input("the length of a toot can't be more than 500 symbols. share the post on diaspora? [y,n]")
+            if (shareOnDiasp[0] == 'n'):
+                sys.exit()
+            else:
                 shareOnDiaspora()
                 sys.exit()
-            sys.exit()
-        else:
+        tootOnMastodon()
+        if arg=='-dm' or arg=='--diadon':
             shareOnDiaspora()
             sys.exit()
+        sys.exit()
+    else:
+        shareOnDiaspora()
+        sys.exit()
