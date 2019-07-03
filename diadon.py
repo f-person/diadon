@@ -44,7 +44,7 @@ def shareOnDiaspora():
     diasporaMedia = []
     for filename in imgFileNames:
         diasporaMedia.append(stream._photoupload(filename=filename))
-    stream.post(text=post, photos=diasporaMedia)
+    stream.post(text=post, photos=diasporaMedia, provider_display_name="diadon")
     print('successfully shared on diaspora')
 
 def tootOnMastodon():
