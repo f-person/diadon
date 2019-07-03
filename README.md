@@ -15,7 +15,7 @@ INSTALLATION:
 
     $ git clone https://github.com/f-person/diadon.git
     $ cd diadon
-    $ python3 setup.py
+    $ ./setup.sh
 
 USAGE:
 
