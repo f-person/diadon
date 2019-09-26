@@ -6,7 +6,7 @@ given_args = sys.argv[1:]
 
 args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config', '-dm', '--diadon']
 
-help_message = """     _   _               _                 
+help_message = r"""     _   _               _                 
   __| | (_)   __ _    __| |   ___    _ __  
  / _` | | |  / _` |  / _` |  / _ \  | '_ \ 
 | (_| | | | | (_| | | (_| | | (_) | | | | |
@@ -127,10 +127,10 @@ for argnum, arg in enumerate(given_args):
     if (len(post)<mastodonMax and arg != '-d' and arg != '--diaspora') or (arg == '-m' or arg =='--mastodon') or arg =='-dm' or arg=='--diadon':
 
         if (len(post)>500):
-            shareOnDiasp = ''
-            while (shareOnDiasp) != 'y' or shareOnDiasp!= 'yes' or shareOnDiasp != 'n' or shareOnDiasp!='no':
-                shareOnDiasp = input("the length of a toot can't be more than 500 symbols. share the post on diaspora? [y,n]")
-            if (shareOnDiasp[0] == 'n'):
+            shareOnDiasp = '1'
+            while shareOnDiasp[0].lower() != 'y' and shareOnDiasp[0].lower() != 'n':
+                shareOnDiasp = input("the length of a toot can't be more than 500 symbols. share the post on diaspora? [y,n] ")
+            if shareOnDiasp[0].lower() == 'n':
                 sys.exit()
             else:
                 shareOnDiaspora()
