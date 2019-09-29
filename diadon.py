@@ -1,8 +1,8 @@
-from mastodon import Mastodon
-import sys, os
-import diaspy, json
+from sys import exit, argv
+from os import path
+import json
 
-given_args = sys.argv[1:]
+given_args = argv[1:]
 
 args = ['-d', '--diaspora', '-m', '--mastodon', '-h', '--help', 'config', '-dm', '--diadon']
 
@@ -30,17 +30,20 @@ CONFIGURATIN:
         (if you dont have them, get as described in "FIRST TIME USE")"""
 
 if len(given_args)==0:
-    sys.exit(help_message)
+    exit(help_message)
 
-keys = json.load(open(os.path.expanduser("~") + "/.diadon/keys.json", "r"))
+keys = json.load(open(path.expanduser("~") + "/.diadon/keys.json", "r"))
 mastodonMax = int(keys["mastodonMax"])
 
 imgFileNames = []
 
 def shareOnDiaspora():
-    api = diaspy.connection.Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
+    from diaspy.connection import Connection
+    from diaspy.streams import Stream
+
+    api = Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
     api.login()
-    stream = diaspy.streams.Stream(api)
+    stream = Stream(api)
     diasporaMedia = []
     for filename in imgFileNames:
         diasporaMedia.append(stream._photoupload(filename=filename))
@@ -48,6 +51,8 @@ def shareOnDiaspora():
     print('successfully shared on diaspora')
 
 def tootOnMastodon():
+    from mastodon import Mastodon
+
     api = Mastodon(keys["m_keys"]["client_key"], keys["m_keys"]["client_secret"], keys["m_keys"]["access_token"], keys["m_keys"]["pod"])
     mastodonMedia = []
     for filename in imgFileNames:
@@ -58,11 +63,11 @@ def tootOnMastodon():
 
 for argnum, arg in enumerate(given_args):
     if arg == '-h' or arg == '--help':
-        sys.exit(help_message)
+        exit(help_message)
 
     if arg == 'config':
         if given_args[argnum+1] == '-m' or given_args[argnum+1]=='--mastodon':
-            with open(os.path.expanduser("~") + "/.diadon/keys.json", "r+") as jsonFile:
+            with open(path.expanduser("~") + "/.diadon/keys.json", "r+") as jsonFile:
                 data = json.load(jsonFile)
                 try:
                     if ('թութ․հայ') in given_args[argnum+2]:
@@ -72,13 +77,13 @@ for argnum, arg in enumerate(given_args):
                     data["m_keys"]["access_token"] = given_args[argnum+4]
                     data["m_keys"]["client_key"] = given_args[argnum+5]
                 except:
-                    sys.exit('please enter all keys')
+                    exit('please enter all keys')
                 jsonFile.seek(0)
                 json.dump(data, jsonFile)
                 jsonFile.truncate()
-            sys.exit()
+            exit()
         elif given_args[argnum+1] == '-d' or given_args[argnum+1]=='--diaspora':
-            with open(os.path.expanduser("~") + "/.diadon/keys.json", "r+") as jsonFile:
+            with open(path.expanduser("~") + "/.diadon/keys.json", "r+") as jsonFile:
                 data = json.load(jsonFile)
                 try:
                     if "http://" not in given_args[argnum+2] or "https://" not in given_args[argnum+2]:
@@ -87,28 +92,28 @@ for argnum, arg in enumerate(given_args):
                     data["d_keys"]["username"] = given_args[argnum+3]
                     data["d_keys"]["password"] = given_args[argnum+4]
                 except:
-                    sys.exit('please enter all keys')
+                    exit('please enter all keys')
                 jsonFile.seek(0)
                 json.dump(data, jsonFile)
                 jsonFile.truncate()
-            sys.exit()
+            exit()
         elif given_args[argnum+1] == '-max':
-            with open(os.path.expanduser("~") + "/.diadon/keys.json", "r+") as jsonFile:
+            with open(path.expanduser("~") + "/.diadon/keys.json", "r+") as jsonFile:
                 data = json.load(jsonFile)
                 if int(given_args[argnum+2])>500:
-                    sys.exit("max length can't be more than 500")
+                    exit("max length can't be more than 500")
                 if not given_args[argnum+2]:
-                    sys.exit("please enter the max number")
+                    exit("please enter the max number")
                 try:
                     data["mastodonMax"] = int(given_args[argnum+2])
                 except:
-                    sys.exit("please enter an integer")
+                    exit("please enter an integer")
                 jsonFile.seek(0)
                 json.dump(data, jsonFile)
                 jsonFile.truncate()
-                sys.exit()   
+                exit()   
         else:
-            sys.exit(help_message)
+            exit(help_message)
     
     if arg not in args:
         post = arg
@@ -118,7 +123,7 @@ for argnum, arg in enumerate(given_args):
         try:
             post = given_args[argnum+1]   
         except:
-            sys.exit('the post is empty')
+            exit('the post is empty')
         for mediaArg in given_args[argnum+2:]:
             try:
                 imgFileNames.append(mediaArg)
@@ -131,15 +136,15 @@ for argnum, arg in enumerate(given_args):
             while shareOnDiasp[0].lower() != 'y' and shareOnDiasp[0].lower() != 'n':
                 shareOnDiasp = input("the length of a toot can't be more than 500 symbols. share the post on diaspora? [y,n] ")
             if shareOnDiasp[0].lower() == 'n':
-                sys.exit()
+                exit()
             else:
                 shareOnDiaspora()
-                sys.exit()
+                exit()
         tootOnMastodon()
         if arg=='-dm' or arg=='--diadon':
             shareOnDiaspora()
-            sys.exit()
-        sys.exit()
+            exit()
+        exit()
     else:
         shareOnDiaspora()
-        sys.exit()
+        exit()
