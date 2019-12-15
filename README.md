@@ -30,6 +30,7 @@ USAGE:
         [] - optional
 
 FIRST TIME USE / SETUP:
+
 	just put diadon.py as diadon somewhere in your path
 	and run the setup command:
 		$ diadon setup
