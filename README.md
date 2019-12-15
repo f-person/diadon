@@ -11,12 +11,6 @@ DEPENDENCIES:
     Mastodon.py:
         $ pip3 install Mastodon.py
 
-INSTALLATION:
-
-    $ git clone https://github.com/f-person/diadon.git
-    $ cd diadon
-    $ ./setup.sh
-
 USAGE:
 
     just type diadon '<your text here>' to share it on diaspora 
@@ -35,7 +29,7 @@ FIRST TIME USE / SETUP:
 	and run the setup command:
 		$ diadon setup
 
-CONFIGURATIN:
+CONFIGURATION:
 
     change max length               : '$ diadon config -max <max num> (can't be more than 500)'
     change diaspora account settings: '$ diadon config -d <pod address> <username> <password>'
