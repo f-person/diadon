@@ -29,10 +29,10 @@ USAGE:
     to post images use this pattern: '$ diadon [arg] 'post text' /full/path/to/image1 [/full/path/to/image2]'
         [] - optional
 
-FIRST TIME USE:
-
-    create a new mastodon application in <your pod address>/settings/applications/new
-    then configure mastodon and diaspora accounts
+FIRST TIME USE / SETUP:
+	just put diadon.py as diadon somewhere in your path
+	and run the setup command:
+		$ diadon setup
 
 CONFIGURATIN:
 

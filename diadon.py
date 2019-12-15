@@ -1,6 +1,10 @@
+from mastodon import Mastodon
+from diaspy.connection import Connection
+from diaspy.streams import Stream
 from sys import exit, argv
-from os import path
+from os import path, mkdir
 import json
+from getpass import getpass
 
 given_args = argv[1:]
 
@@ -32,15 +36,65 @@ CONFIGURATIN:
 if len(given_args)==0:
     exit(help_message)
 
+if given_args[0] == 'setup':
+    configuration = {}
+
+    mastodon_base_url = input('Enter your Mastodon instance url (just press enter to not configure mastodon): ')
+    if mastodon_base_url != '':
+        (client_id, client_secret) = Mastodon.create_app('diadon', scopes=['write'], api_base_url=mastodon_base_url, website='https://github.com/f-person/diadon')
+        api = Mastodon(client_id, client_secret, api_base_url=mastodon_base_url)
+
+        username = input('Email: ')
+        password = getpass()
+        access_token = api.log_in(username, password, scopes=['write'])
+
+        configuration['m_keys'] = {
+            'pod': mastodon_base_url,
+            'client_key': client_id,
+            'client_secret': client_secret,
+            'access_token': access_token,
+        }
+ 
+    diaspora_base_url = input('Enter your diaspora pod url (just press enter to not configure diaspora): ')
+    if diaspora_base_url != '':
+        username = input('Username: ')
+        password = getpass()
+
+        configuration['d_keys'] = {
+            'pod': diaspora_base_url,
+            'username': username,
+            'password': password,
+        }
+ 
+    if path.isdir(path.expanduser('~') + '/.diadon'):
+        if path.isfile(path.expanduser('~') + '/.diadon/keys.json'):
+            with open(path.expanduser('~') + '/.diadon/keys.json', 'r+') as json_file:
+                data = json.load(json_file)
+                
+                for key in configuration.keys():
+                    data[key] = configuration[key]
+                
+                json_file.seek(0)
+                json.dump(data, json_file, indent=2)
+                json_file.truncate()
+        else:
+            with open(path.expanduser('~') + '/.diadon/keys.json', 'w') as json_file:
+                configuration['mastodonMax'] = 140
+                json_file.write(json.dumps(configuration, indent=2))
+    else:
+        mkdir(path.expanduser('~') + '/.diadon')
+        with open(path.expanduser('~') + '/.diadon/keys.json', 'w') as json_file:
+            configuration['mastodonMax'] = 140
+            json_file.write(json.dumps(configuration, indent=2))
+
+    exit()
+
 keys = json.load(open(path.expanduser("~") + "/.diadon/keys.json", "r"))
 mastodonMax = int(keys["mastodonMax"])
 
 imgFileNames = []
 
 def shareOnDiaspora():
-    from diaspy.connection import Connection
-    from diaspy.streams import Stream
-
     api = Connection(pod = keys["d_keys"]["pod"], username=keys["d_keys"]["username"], password = keys["d_keys"]["password"])
     api.login()
     stream = Stream(api)
@@ -51,8 +105,6 @@ def shareOnDiaspora():
     print('successfully shared on diaspora')
 
 def tootOnMastodon():
-    from mastodon import Mastodon
-
     api = Mastodon(keys["m_keys"]["client_key"], keys["m_keys"]["client_secret"], keys["m_keys"]["access_token"], keys["m_keys"]["pod"])
     mastodonMedia = []
     for filename in imgFileNames:
@@ -79,7 +131,7 @@ for argnum, arg in enumerate(given_args):
                 except:
                     exit('please enter all keys')
                 jsonFile.seek(0)
-                json.dump(data, jsonFile)
+                json.dump(data, jsonFile, indent=2)
                 jsonFile.truncate()
             exit()
         elif given_args[argnum+1] == '-d' or given_args[argnum+1]=='--diaspora':
@@ -94,7 +146,7 @@ for argnum, arg in enumerate(given_args):
                 except:
                     exit('please enter all keys')
                 jsonFile.seek(0)
-                json.dump(data, jsonFile)
+                json.dump(data, jsonFile, indent=2)
                 jsonFile.truncate()
             exit()
         elif given_args[argnum+1] == '-max':
@@ -109,7 +161,7 @@ for argnum, arg in enumerate(given_args):
                 except:
                     exit("please enter an integer")
                 jsonFile.seek(0)
-                json.dump(data, jsonFile)
+                json.dump(data, jsonFile, indent=2)
                 jsonFile.truncate()
                 exit()   
         else:
