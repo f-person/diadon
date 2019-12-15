@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from mastodon import Mastodon
 from diaspy.connection import Connection
 from diaspy.streams import Stream
