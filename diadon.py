@@ -1,255 +1,182 @@
 #!/usr/bin/python3
+import argparse
 import json
 from getpass import getpass
+from threading import Thread
 from os import mkdir, path
-from sys import argv, exit
 
 from diaspy.connection import Connection
 from diaspy.streams import Stream
 from mastodon import Mastodon
 
-given_args = argv[1:]
 
-args = ['-d', '--diaspora',
-        '-m', '--mastodon',
-        '-dm', '--diadon'
-        '-h', '--help',
-        'config']
+def get_diaspora_configs() -> dict:
+    pod_url = input("diaspora* pod url: ")
+    username = input("Username: ")
+    password = getpass()
 
-help_message = r"""     _   _               _
-  __| | (_)   __ _    __| |
- / _` | | |  / _` |  / _` |  / _ \  | '_ \
-| (_| | | | | (_| | | (_| | | (_) | | | | |
- \__,_| |_|  \__,_|  \__,_|  \___/  |_| |_|
+    return {
+        'pod_url': pod_url,
+        'username': username,
+        'password': password
+    }
 
-USAGE:
-    just type diadon '<your text here>' to share it on diaspora
-    if the length of the text is more than length for tooting on mastodon.
-    by default it's set to 140.
 
-    to ignore max lentgh and toot on mastodon , use -m  or --mastodon argument:
-        $ diadon -m  'your text here'
-    to ignore max length and share on diaspora, use -d  or --diaspora argument:
-        $ diadon -d  'your text here'
-    to share on diaspora and toot on mastodon , use -dm or --diadon   argument:
-        $ diadon -dm 'your text here'
+def get_mastodon_configs() -> dict:
+    instance_url = input("Mastodon instance url: ")
+    (client_id, client_secret) = Mastodon.create_app(
+            'diadon',
+            api_base_url=instance_url,
+            scopes=['write'],
+            website='https://github.com/f-person/diadon')
+    api = Mastodon(client_id,
+                   client_secret,
+                   api_base_url=instance_url)
 
-FIRST TIME USE:
-    just put diadon.py as diadon somewhere in your path
-    and run the setup command:
-        $ diadon setup
+    email = input("Email: ")
+    password = getpass()
 
-CONFIGURATIN:
-    change max length               :
-        $ diadon config -max <max num> (can't be more than 500)
-    change diaspora account settings:
-        $ diadon config -d <pod> <username> <password>
-    change mastodon account settings:
-        $ diadon config -m <pod> <client_secret> <access_token> <client_key>
-        (if you dont have them, get as described in "FIRST TIME USE")"""
+    access_token = api.log_in(email, password, scopes=['write'])
 
-if len(given_args) == 0:
-    exit(help_message)
+    return {
+        'instance_url': instance_url,
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'access_token': access_token
+    }
 
-if given_args[0] == 'setup':
-    configuration = {}
 
-    mastodon_base_url = input('Enter your Mastodon instance url'
-                              '(just press enter to not configure mastodon): ')
-    if mastodon_base_url != '':
-        (client_id, client_secret) = Mastodon.create_app(
-                'diadon',
-                scopes=['write'],
-                api_base_url=mastodon_base_url,
-                website='https://github.com/f-person/diadon')
-        api = Mastodon(
-                client_id,
-                client_secret,
-                api_base_url=mastodon_base_url)
+def get_mastodon_max_config() -> int:
+    mastodon_max = int(input("Mastodon max: "))
 
-        username = input('Email: ')
-        password = getpass()
-        access_token = api.log_in(username, password, scopes=['write'])
+    while mastodon_max > 500:
+        print("Mastodon max cannot be higher than 500")
+        mastodon_max = int(input("Mastodon max: "))
 
-        configuration['m_keys'] = {
-            'pod': mastodon_base_url,
-            'client_key': client_id,
-            'client_secret': client_secret,
-            'access_token': access_token,
-        }
+    return mastodon_max
 
-    diaspora_base_url = input('Enter your diaspora pod url'
-                              '(just press enter to not configure diaspora): ')
-    if diaspora_base_url != '':
-        username = input('Username: ')
-        password = getpass()
 
-        configuration['d_keys'] = {
-            'pod': diaspora_base_url,
-            'username': username,
-            'password': password,
-        }
+def write_configurations(new_configs: dict):
+    config_dir_path = path.join(path.expanduser('~'), '.config/diadon')
+    config_file_path = path.join(config_dir_path, 'keys.json')
 
-    if path.isdir(path.expanduser('~') + '/.diadon'):
-        if path.isfile(path.expanduser('~') + '/.diadon/keys.json'):
-            with open(path.expanduser('~') +
-                      '/.diadon/keys.json', 'r+') as json_file:
-                data = json.load(json_file)
+    if path.isdir(config_dir_path):
+        if path.isfile(config_file_path):
+            with open(config_file_path, 'r+') as configs_file:
+                configs = json.load(configs_file)
 
-                for key in configuration.keys():
-                    data[key] = configuration[key]
+                for key in new_configs.keys():
+                    configs[key] = new_configs[key]
 
-                json_file.seek(0)
-                json.dump(data, json_file, indent=2)
-                json_file.truncate()
+                configs_file.seek(0)
+                json.dump(configs, configs_file, indent=4)
+                configs_file.truncate()
         else:
-            with open(path.expanduser('~') +
-                      '/.diadon/keys.json', 'w') as json_file:
-                configuration['mastodonMax'] = 140
-                json_file.write(json.dumps(configuration, indent=2))
+            with open(config_file_path, 'w') as configs_file:
+                configs_file.write(json.dumps(new_configs, indent=4))
     else:
-        mkdir(path.expanduser('~') + '/.diadon')
-        with open(path.expanduser('~') +
-                  '/.diadon/keys.json', 'w') as json_file:
-            configuration['mastodonMax'] = 140
-            json_file.write(json.dumps(configuration, indent=2))
-
-    exit()
-
-keys = json.load(open(path.expanduser('~') + '/.diadon/keys.json', 'r'))
-mastodon_max = int(keys['mastodonMax'])
-
-images = []
+        mkdir(config_dir_path)
+        with open(config_file_path, 'w') as configs_file:
+            configs_file.write(json.dumps(new_configs, indent=4))
 
 
-def share_on_diaspora():
-    api = Connection(pod=keys['d_keys']['pod'],
-                     username=keys['d_keys']['username'],
-                     password=keys['d_keys']['password'])
+def read_configurations() -> dict:
+    config_dir_path = path.join(path.expanduser('~'), '.config/diadon')
+    config_file_path = path.join(config_dir_path, 'keys.json')
+
+    with open(config_file_path, 'r') as configs_file:
+        configs = json.load(configs_file)
+        return configs
+
+
+def share_on_diaspora(configs: dict, post_text: str, image_filenames: [str]):
+    api = Connection(pod=configs['diaspora']['pod_url'],
+                     username=configs['diaspora']['username'],
+                     password=configs['diaspora']['password'])
     api.login()
+
     stream = Stream(api)
-    diasporaMedia = []
-    for filename in images:
-        diasporaMedia.append(stream._photoupload(filename=filename))
-    stream.post(text=post,
-                photos=diasporaMedia,
-                provider_display_name="diadon")
-    print('successfully shared on diaspora')
+
+    post_media = []
+    for filename in image_filenames:
+        post_media.append(stream._photoupload(filename))
+
+    stream.post(text=post_text,
+                photos=post_media,
+                provider_display_name='diadon')
+
+    print("shared on diaspora*")
 
 
-def toot_on_mastodon():
-    api = Mastodon(keys['m_keys']['client_key'],
-                   keys['m_keys']['client_secret'],
-                   keys['m_keys']['access_token'],
-                   keys['m_keys']['pod'])
-    mastodonMedia = []
-    for filename in images:
+def toot_on_mastodon(configs: dict, post_text: str, image_filenames: [str]):
+    api = Mastodon(configs['mastodon']['client_id'],
+                   configs['mastodon']['client_secret'],
+                   configs['mastodon']['access_token'],
+                   configs['mastodon']['instance_url'])
+
+    post_media = []
+    for filename in image_filenames:
         with open(filename, 'rb') as f:
-            mastodonMedia.append(api.media_post(f.read(), 'image/png'))
-    api.status_post(post, media_ids=mastodonMedia)
-    print("successfully tooted on mastodon")
+            post_media.append(api.media_post(f.read(), 'image/png'))
+
+    api.status_post(post_text, media_ids=post_media)
+
+    print("tooted on Mastodon")
 
 
-for argnum, arg in enumerate(given_args):
-    if arg == '-h' or arg == '--help':
-        exit(help_message)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+            description="diadon is a tool for posting on diaspora/mastodon.")
 
-    if arg == 'config':
-        if (given_args[argnum+1] == '-m' or
-                given_args[argnum+1] == '--mastodon'):
-            with open(path.expanduser('~') +
-                      '/.diadon/keys.json', 'r+') as json_file:
-                data = json.load(json_file)
-                try:
-                    if ('թութ․հայ') in given_args[argnum+2]:
-                        given_args[argnum+2] = \
-                                'https://xn--69aa8bzb.xn--y9a3aq'
-                    data['m_keys']['pod'] = given_args[argnum+2]
-                    data['m_keys']['client_secret'] = given_args[argnum+3]
-                    data['m_keys']['access_token'] = given_args[argnum+4]
-                    data['m_keys']['client_key'] = given_args[argnum+5]
-                except BaseException:
-                    exit('please enter all keys')
-                json_file.seek(0)
-                json.dump(data, json_file, indent=2)
-                json_file.truncate()
-            exit()
-        elif (given_args[argnum+1] == '-d' or
-                given_args[argnum+1] == '--diaspora'):
-            with open(path.expanduser('~') +
-                      "/.diadon/keys.json", "r+") as json_file:
-                data = json.load(json_file)
-                try:
-                    if ('http://' not in given_args[argnum+2] or
-                            'https://' not in given_args[argnum+2]):
-                        given_args[argnum+2] = "https://"
-                        + given_args[argnum+2]
-                    data['d_keys']['pod'] = given_args[argnum+2]
-                    data['d_keys']['username'] = given_args[argnum+3]
-                    data['d_keys']['password'] = given_args[argnum+4]
-                except BaseException:
-                    exit("please enter all keys")
-                json_file.seek(0)
-                json.dump(data, json_file, indent=2)
-                json_file.truncate()
-            exit()
-        elif given_args[argnum+1] == '-max':
-            with open(path.expanduser('~') +
-                      "/.diadon/keys.json", "r+") as json_file:
-                data = json.load(json_file)
-                if int(given_args[argnum+2]) > 500:
-                    exit("max length can't be more than 500")
-                if not given_args[argnum+2]:
-                    exit("please enter the max number")
-                try:
-                    data['mastodonMax'] = int(given_args[argnum+2])
-                except BaseException:
-                    exit("please enter an integer")
-                json_file.seek(0)
-                json.dump(data, json_file, indent=2)
-                json_file.truncate()
-                exit()
-        else:
-            exit(help_message)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--config', action='store',
+                       const='dm', default=None, nargs='?',
+                       help="Configure diadon")
+    group.add_argument('-d', '--diaspora', action='store_true',
+                       help="Share on diaspora*")
+    group.add_argument('-m', '--mastodon', action='store_true',
+                       help="Toot on Mastodon")
+    group.add_argument('-dm', '--diadon', action='store_true',
+                       help="Share on diaspra and Toot on Mastodon")
 
-    if arg not in args:
-        post = arg
-        for mediaArg in given_args[argnum+1:]:
-            images.append(mediaArg)
-    if (arg == '-dm' or arg == '--diadon' or
-            arg == '-d' or arg == '--diaspora' or
-            arg == '-m' or arg == '--mastodon'):
-        try:
-            post = given_args[argnum+1]
-        except BaseException:
-            exit("the post is empty")
-        for mediaArg in given_args[argnum+2:]:
-            try:
-                images.append(mediaArg)
-            except BaseException:
-                print("no media")
+    parser.add_argument('post_text', nargs='?', default='',
+                        help="The body of post to share")
+    parser.add_argument('-i', '--images', nargs='*', default=[],
+                        help="Media to post (Not more than 4 for Mastodon)")
 
-    if ((len(post) < mastodon_max and arg != '-d' and arg != '--diaspora') or
-            (arg == '-m' or arg == '--mastodon') or
-            (arg == '-dm' or arg == '--diadon')):
-        if (len(post) > 500):
-            should_share_on_diaspora = '1'
-            while (should_share_on_diaspora[0].lower() != 'y' and
-                    should_share_on_diaspora[0].lower() != 'n'):
-                input_prompt = ("the length of a toot can't be more than"
-                                "500 symbols. share the post on diaspora?"
-                                "[y,n] ")
-                should_share_on_diaspora = input()
-            if should_share_on_diaspora[0].lower() == 'n':
-                exit()
-            else:
-                share_on_diaspora()
-                exit()
-        toot_on_mastodon()
-        if arg == '-dm' or arg == '--diadon':
-            share_on_diaspora()
-            exit()
-        exit()
+    args = parser.parse_args()
+
+    if args.diadon:
+        configs = read_configurations()
+        Thread(target=share_on_diaspora,
+               args=(configs, args.post_text, args.images,)).start()
+        toot_on_mastodon(configs, args.post_text, args.images)
+    elif args.diaspora:
+        share_on_diaspora(read_configurations(), args.post_text, args.images)
+    elif args.mastodon:
+        toot_on_mastodon(read_configurations(), args.post_text, args.images)
+    elif args.config == 'dm':
+        diaspora_configs = get_diaspora_configs()
+        mastodon_configs = get_mastodon_configs()
+        write_configurations({'diaspra': diaspora_configs,
+                              'mastodon': mastodon_configs})
+    elif args.config == 'd' or args.config == 'diaspora':
+        diaspora_configs = get_diaspora_configs()
+        write_configurations({'diaspora': diaspora_configs})
+    elif args.config == 'm' or args.config == 'mastodon':
+        mastodon_configs = get_mastodon_configs()
+        write_configurations({'mastodon': mastodon_configs})
+    elif args.config == 'mm' or args.config == 'mastodon_max':
+        mastodon_max = get_mastodon_max_config()
+        write_configurations({'mastodon_max': mastodon_max})
     else:
-        share_on_diaspora()
-        exit()
+        configs = read_configurations()
+        if 'mastodon_max' not in configs.keys():
+            mastodon_max = 140
+        else:
+            mastodon_max = configs['mastodon_max']
+
+        if mastodon_max > len(args.post_text):
+            toot_on_mastodon(configs, args.post_text, args.images)
+        else:
+            share_on_diaspora(configs, args.post_text, args.images)
