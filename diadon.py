@@ -6,6 +6,8 @@ from threading import Thread
 from os import mkdir, path
 
 from diaspy.connection import Connection
+from diaspy.people import User
+from diaspy.models import Post
 from diaspy.streams import Stream
 from mastodon import Mastodon
 
@@ -27,7 +29,7 @@ def get_mastodon_configs() -> dict:
     (client_id, client_secret) = Mastodon.create_app(
             'diadon',
             api_base_url=instance_url,
-            scopes=['write'],
+            scopes=['read', 'write'],
             website='https://github.com/f-person/diadon')
     api = Mastodon(client_id,
                    client_secret,
@@ -36,7 +38,7 @@ def get_mastodon_configs() -> dict:
     email = input("Email: ")
     password = getpass()
 
-    access_token = api.log_in(email, password, scopes=['write'])
+    access_token = api.log_in(email, password, scopes=['read', 'write'])
 
     return {
         'instance_url': instance_url,
@@ -89,26 +91,44 @@ def read_configurations() -> dict:
         return configs
 
 
-def share_on_diaspora(configs: dict, post_text: str, image_filenames: [str]):
+def shorten_text(text: str) -> str:
+    return text[:140] + '...' if len(text) > 140 else text[:140]
+
+
+def share_on_diaspora(configs: dict, post_text: str, image_filenames: [str],
+                      reply_to_latest_post: bool = False):
     api = Connection(pod=configs['diaspora']['pod_url'],
                      username=configs['diaspora']['username'],
                      password=configs['diaspora']['password'])
     api.login()
 
-    stream = Stream(api)
+    success_message = "shared on diaspora*"
 
-    post_media = []
-    for filename in image_filenames:
-        post_media.append(stream._photoupload(filename))
+    if reply_to_latest_post:
+        handle = '%s@%s' % (configs['diaspora']['username'],
+                            configs['diaspora']['pod_url'].split('://')[1])
+        user = User(api, handle=handle)
 
-    stream.post(text=post_text,
-                photos=post_media,
-                provider_display_name='diadon')
+        latest_post = Post(api, user.stream[0].id, fetch=False, comments=False)
+        latest_post.comment(post_text)
 
-    print("shared on diaspora*")
+        success_message = "replied to %s" % shorten_text(str(user.stream[0]))
+    else:
+        stream = Stream(api)
+
+        post_media = []
+        for filename in image_filenames:
+            post_media.append(stream._photoupload(filename))
+
+        stream.post(text=post_text,
+                    photos=post_media,
+                    provider_display_name='diadon')
+
+    print(success_message)
 
 
-def toot_on_mastodon(configs: dict, post_text: str, image_filenames: [str]):
+def toot_on_mastodon(configs: dict, post_text: str, image_filenames: [str],
+                     reply_to_latest_post: bool = False):
     api = Mastodon(configs['mastodon']['client_id'],
                    configs['mastodon']['client_secret'],
                    configs['mastodon']['access_token'],
@@ -119,9 +139,21 @@ def toot_on_mastodon(configs: dict, post_text: str, image_filenames: [str]):
         with open(filename, 'rb') as f:
             post_media.append(api.media_post(f.read(), 'image/png'))
 
-    api.status_post(post_text, media_ids=post_media)
+    latest_status_id = None
+    success_message = "tooted on Mastodon"
 
-    print("tooted on Mastodon")
+    if reply_to_latest_post:
+        account_id = api.account_verify_credentials()['id']
+        latest_status = api.account_statuses(account_id, limit=1)[0]
+        latest_status_id = latest_status['id']
+
+        success_message = ("replied to %s" %
+                           shorten_text(latest_status['content']))
+
+    api.status_post(post_text, in_reply_to_id=latest_status_id,
+                    media_ids=post_media)
+
+    print(success_message)
 
 
 if __name__ == '__main__':
@@ -139,6 +171,8 @@ if __name__ == '__main__':
     group.add_argument('-dm', '--diadon', action='store_true',
                        help="Share on diaspra and Toot on Mastodon")
 
+    parser.add_argument('-r', '--reply', action='store_true',
+                        help="Reply to the latest toot/post")
     parser.add_argument('post_text', nargs='?', default='',
                         help="The body of post to share")
     parser.add_argument('-i', '--images', nargs='*', default=[],
@@ -149,12 +183,15 @@ if __name__ == '__main__':
     if args.diadon:
         configs = read_configurations()
         Thread(target=share_on_diaspora,
-               args=(configs, args.post_text, args.images,)).start()
-        toot_on_mastodon(configs, args.post_text, args.images)
+               args=(configs, args.post_text, args.images,
+                     args.reply,)).start()
+        toot_on_mastodon(configs, args.post_text, args.images, args.reply)
     elif args.diaspora:
-        share_on_diaspora(read_configurations(), args.post_text, args.images)
+        share_on_diaspora(read_configurations(), args.post_text, args.images,
+                          args.reply)
     elif args.mastodon:
-        toot_on_mastodon(read_configurations(), args.post_text, args.images)
+        toot_on_mastodon(read_configurations(), args.post_text, args.images,
+                         args.reply)
     elif args.config == 'dm':
         diaspora_configs = get_diaspora_configs()
         mastodon_configs = get_mastodon_configs()
@@ -177,6 +214,6 @@ if __name__ == '__main__':
             mastodon_max = configs['mastodon_max']
 
         if mastodon_max > len(args.post_text):
-            toot_on_mastodon(configs, args.post_text, args.images)
+            toot_on_mastodon(configs, args.post_text, args.images, args.reply)
         else:
-            share_on_diaspora(configs, args.post_text, args.images)
+            share_on_diaspora(configs, args.post_text, args.images, args.reply)
