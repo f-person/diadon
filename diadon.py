@@ -169,7 +169,7 @@ if __name__ == '__main__':
     group.add_argument('-m', '--mastodon', action='store_true',
                        help="Toot on Mastodon")
     group.add_argument('-dm', '--diadon', action='store_true',
-                       help="Share on diaspra and Toot on Mastodon")
+                       help="Share on diaspora and Toot on Mastodon")
 
     parser.add_argument('-r', '--reply', action='store_true',
                         help="Reply to the latest toot/post")
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     elif args.config == 'dm':
         diaspora_configs = get_diaspora_configs()
         mastodon_configs = get_mastodon_configs()
-        write_configurations({'diaspra': diaspora_configs,
+        write_configurations({'diaspora': diaspora_configs,
                               'mastodon': mastodon_configs})
     elif args.config == 'd' or args.config == 'diaspora':
         diaspora_configs = get_diaspora_configs()
